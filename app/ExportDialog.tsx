@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CloseIcon, CopyIcon, CheckIcon, CodeIcon, ImageIcon, DownloadIcon } from './icons'
 import type { Motion } from './motions'
 import { buildPeelCode } from './peel'
@@ -43,12 +44,10 @@ function download(filename: string, content: string, type: string) {
 }
 
 export default function ExportDialog({
-  open, onClose, preview, getExportSvg, width, height, motion, peelSticker, peelBacking, prompt, onExportPng,
+  open, onClose, preview, getExportSvg, width, height, motion: activeMotion, peelSticker, peelBacking, prompt, onExportPng,
 }: Props) {
   const [format, setFormat] = useState<Format>('code')
   const [copied, setCopied] = useState(false)
-
-  if (!open) return null
 
   const copyPrompt = async () => {
     try {
@@ -78,15 +77,15 @@ export default function ExportDialog({
   }
 
   const exportCode = async () => {
-    if (motion.id === 'peel') {
+    if (activeMotion.id === 'peel') {
       download('Sticker.tsx', buildPeelCode(peelSticker, peelBacking, Math.max(width, height) * 2.4), 'text/plain')
       return
     }
     const svgMarkup = await getExportSvg()
-    const hasMotion = !!motion.animation
-    const styleTag = hasMotion ? `      <style>{\`${motion.keyframes}\`}</style>\n` : ''
+    const hasMotion = !!activeMotion.animation
+    const styleTag = hasMotion ? `      <style>{\`${activeMotion.keyframes}\`}</style>\n` : ''
     const animStyle = hasMotion
-      ? `, animation: '${motion.animation}', transformOrigin: '${motion.origin}'`
+      ? `, animation: '${activeMotion.animation}', transformOrigin: '${activeMotion.origin}'`
       : ''
     const code = `export default function Sticker() {
   return (
@@ -114,14 +113,27 @@ ${styleTag}      <div
   const actionLabel = format === 'code' ? 'Export as Code' : format === 'png' ? 'Export as PNG' : 'Export as SVG'
 
   return (
-    <div
+    <AnimatePresence>
+      {open && (
+    <motion.div
+      key="backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0a66] p-6"
       onClick={onClose}
     >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        onClick={(e) => e.stopPropagation()}
+      >
       <Elevated
         offset={4}
         className="flex max-h-[90vh] w-[680px] flex-col overflow-hidden rounded-2xl border border-[var(--app-border)]"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-b-[var(--app-border)] px-6 py-4">
@@ -138,22 +150,26 @@ ${styleTag}      <div
         </div>
 
         {/* Body */}
-        <div className="flex gap-6 overflow-y-auto p-6">
+        <div className="flex gap-6 overflow-x-hidden overflow-y-auto p-6">
           {/* Preview */}
           <div className="flex w-[248px] shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
             {preview}
           </div>
 
-          {/* Options */}
-          <div className="flex flex-1 flex-col gap-5">
+          {/* Options — min-w-0 lets it shrink so the long SVG in the prompt
+              wraps instead of forcing the whole column past the dialog width. */}
+          <div className="flex min-w-0 flex-1 flex-col gap-5">
             <div className="flex flex-col gap-2">
               <h3 className="text-[13px] font-semibold text-[var(--app-fg)]">Format</h3>
               <div className="flex gap-3">
                 {FORMATS.map((f) => {
                   const selected = format === f.id
                   return (
-                    <button
+                    <motion.button
                       key={f.id}
+                      whileTap={{ scale: 0.96 }}
+                      whileHover={{ y: -2 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       onClick={() => setFormat(f.id)}
                       className={`flex flex-1 flex-col gap-2 rounded-xl bg-[var(--app-chrome)] p-3 text-left ${selected ? 'border-2 border-[var(--app-fg)]' : 'border border-[var(--app-border)]'}`}
                     >
@@ -162,7 +178,7 @@ ${styleTag}      <div
                         <span className="text-[13px] font-semibold leading-tight text-[var(--app-fg)]">{f.label}</span>
                         <span className="text-[11px] text-[var(--app-muted)]">{f.sub}</span>
                       </div>
-                    </button>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -171,30 +187,45 @@ ${styleTag}      <div
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-[13px] font-semibold text-[var(--app-fg)]">AI prompt</h3>
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.94 }}
                   onClick={copyPrompt}
                   className="flex h-7 items-center gap-1.5 rounded-md border border-[var(--app-border)] px-2.5 text-[var(--app-sub)] hover:bg-[var(--app-soft)]"
                 >
-                  {copied ? <CheckIcon size={14} className="text-[#28a948]" /> : <CopyIcon size={14} />}
-                  <span className="text-xs font-medium">{copied ? 'Copied' : 'Copy'}</span>
-                </button>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {copied ? (
+                      <motion.span key="c" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="flex items-center gap-1.5">
+                        <CheckIcon size={14} className="text-[#28a948]" /><span className="text-xs font-medium">Copied</span>
+                      </motion.span>
+                    ) : (
+                      <motion.span key="p" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="flex items-center gap-1.5">
+                        <CopyIcon size={14} /><span className="text-xs font-medium">Copy</span>
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
               </div>
               <div className="h-[180px] overflow-y-auto rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
-                <p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-[var(--app-sub)]">{prompt}</p>
+                <p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-xs leading-relaxed text-[var(--app-sub)]">{prompt}</p>
               </div>
               <p className="text-[11px] text-[var(--app-muted)]">Paste into ChatGPT, Claude or any LLM to recreate this sticker.</p>
             </div>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.02 }}
               onClick={onExport}
               className="flex h-10 items-center justify-center gap-2 rounded-lg bg-[#171717] text-[13px] font-medium text-white"
             >
               <DownloadIcon size={16} className="text-white" />
               {actionLabel}
-            </button>
+            </motion.button>
           </div>
         </div>
       </Elevated>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

@@ -3,6 +3,10 @@ node_modules
 .pnp
 .pnp.js
 
+# installed agent skills (npx skills)
+.agents
+.claude/skills
+
 # next.js / build output
 .next
 out

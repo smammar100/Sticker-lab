@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from 'react'
 import { useTheme } from 'next-themes'
+import { motion, AnimatePresence } from 'framer-motion'
+import { tap } from '@/lib/motion'
 import {
   buildFilter,
   buildSilhouetteMaskSvg,
@@ -127,7 +129,7 @@ export default function App() {
   const useMaskedOutline = isShaderFill || isGradientFill
   const shaderComp = isShaderFill ? getShader(controls.outlineShader)?.Comp : undefined
   const gradientCss = `linear-gradient(135deg, ${controls.outlineColor} 0%, ${controls.outlineColor2} 100%)`
-  const motion = getMotion(controls.motion)
+  const activeMotion = getMotion(controls.motion)
   const isPeel = controls.motion === 'peel'
 
   const filterMarkup = useMemo(
@@ -312,7 +314,7 @@ export default function App() {
     <div className="flex min-h-screen w-full flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
       <style dangerouslySetInnerHTML={{ __html: `${MOTION_KEYFRAMES}\n${PEEL_CSS}` }} />
       {/* Header */}
-      <header className="flex h-[60px] shrink-0 items-center gap-4 border-b border-b-[var(--app-border)] bg-[var(--app-chrome)] px-5">
+      <header className="anim-enter-down flex h-[60px] shrink-0 items-center gap-4 border-b border-b-[var(--app-border)] bg-[var(--app-chrome)] px-5">
         <div className="flex items-center gap-2.5">
           <div className="flex size-[30px] items-center justify-center rounded-lg bg-[#171717] shadow-[0px_2px_4px_rgba(0,0,0,0.2)] dark:bg-[#006bff]">
             <ImageIcon size={16} className="text-white" />
@@ -321,20 +323,24 @@ export default function App() {
           <span className="rounded-md border border-[#cae7ff] bg-[#f0f7ff] px-1.5 text-[11px] font-medium text-[#006bff] dark:border-[#1d456e] dark:bg-[#0e2a47] dark:text-[#5aa6ff]">alpha</span>
         </div>
         <div className="flex flex-1 items-center justify-end gap-2">
-          <button
+          <motion.button
+            {...tap}
+            whileHover={{ rotate: -8 }}
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             aria-label="Toggle theme"
             className="flex size-9 items-center justify-center rounded-md border border-[var(--app-border)] text-[var(--app-sub)] hover:bg-[var(--app-soft)]"
           >
             {mounted && isDark ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            {...tap}
+            whileHover={{ scale: 1.03 }}
             onClick={() => setExportOpen(true)}
             className="flex h-9 items-center gap-1.5 rounded-md bg-[#171717] px-3.5 text-[13px] font-medium text-white dark:bg-white dark:text-[#171717]"
           >
             <DownloadIcon size={15} className="text-white dark:text-[#171717]" />
             Export
-          </button>
+          </motion.button>
           <input
             ref={fileRef} type="file" accept=".svg,image/svg+xml" className="hidden"
             onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
@@ -344,7 +350,7 @@ export default function App() {
 
       <div className="relative flex flex-1">
         {/* Left: source — floating full-height column (card + zoom/reset) */}
-        <aside className="absolute bottom-4 left-4 top-4 z-20 flex w-[340px] flex-col justify-between gap-4">
+        <aside className="anim-enter-left absolute bottom-4 left-4 top-4 z-20 flex w-[340px] flex-col justify-between gap-4">
           <Elevated offset={2} className="flex max-h-[calc(100%-3rem)] w-full flex-col gap-3.5 overflow-y-auto rounded-2xl border border-[var(--app-border)] p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex flex-col gap-2.5">
             <h2 className="text-[13px] font-semibold tracking-[-0.28px]">Source</h2>
@@ -371,14 +377,16 @@ export default function App() {
               {PRESETS.map((p) => {
                 const active = rawSvg === p.svg
                 return (
-                  <button
+                  <motion.button
                     key={p.id}
+                    {...tap}
+                    whileHover={{ scale: 1.08, y: -2 }}
                     onClick={() => applyPreset(p)}
                     title={p.label}
                     className={`flex aspect-square items-center justify-center rounded-lg p-1.5 ${active ? 'shadow-[0px_0px_0px_1px_var(--app-chrome),0px_0px_0px_2px_#006bff]' : 'border border-[var(--app-border)] hover:border-[#00000033]'} bg-[var(--app-bg)]`}
                   >
                     <span className="size-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: p.svg }} />
-                  </button>
+                  </motion.button>
                 )
               })}
             </div>
@@ -451,7 +459,11 @@ export default function App() {
             className="flex flex-1 items-center justify-center overflow-auto bg-[var(--app-bg)] p-8 [background-image:linear-gradient(90deg,var(--app-grid)_1px,transparent_1px),linear-gradient(var(--app-grid)_1px,transparent_1px)] [background-size:24px_24px]"
           >
             <div className="flex shrink-0 flex-col items-center gap-6">
-              <div className="flex shrink-0 items-center justify-center" style={{ width: previewPx, height: previewPx }}>
+              <div
+                key={rawSvg}
+                className="anim-enter-pop flex shrink-0 items-center justify-center"
+                style={{ width: previewPx, height: previewPx }}
+              >
                 {ok ? (
                   isPeel ? (
                     renderPeel(previewPx)
@@ -461,8 +473,8 @@ export default function App() {
                       composedFor={composedSvg}
                       maskUrl={mounted ? maskUrl : undefined}
                       fill={maskFill}
-                      animation={mounted ? motion.animation || undefined : undefined}
-                      origin={motion.origin}
+                      animation={mounted ? activeMotion.animation || undefined : undefined}
+                      origin={activeMotion.origin}
                     />
                   )
                 ) : (
@@ -479,7 +491,8 @@ export default function App() {
         </main>
 
         {/* Right: controls — floating card */}
-        <Elevated offset={2} className="absolute right-4 top-4 z-20 flex max-h-[calc(100%-5rem)] w-[320px] flex-col overflow-hidden rounded-2xl border border-[var(--app-border)]">
+        <div className="anim-enter-right absolute right-4 top-4 z-20 max-h-[calc(100%-5rem)] w-[320px]">
+        <Elevated offset={2} className="flex max-h-[calc(100vh-5rem)] w-full flex-col overflow-hidden rounded-2xl border border-[var(--app-border)]">
           <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-b-[var(--app-border)] px-4">
             <h2 className="text-[13px] font-semibold tracking-[-0.28px]">Sticker controls</h2>
             <span className="rounded-full bg-[var(--app-soft)] px-2 py-0.5 text-xs font-medium text-[var(--app-sub)]">
@@ -631,6 +644,7 @@ export default function App() {
             </Section>
           </div>
         </Elevated>
+        </div>
       </div>
 
       {/* Footer */}
@@ -658,8 +672,8 @@ export default function App() {
                 composedFor={composedSvg}
                 maskUrl={mounted ? maskUrl : undefined}
                 fill={maskFill}
-                animation={mounted ? motion.animation || undefined : undefined}
-                origin={motion.origin}
+                animation={mounted ? activeMotion.animation || undefined : undefined}
+                origin={activeMotion.origin}
               />
             )
           }
@@ -668,7 +682,7 @@ export default function App() {
           peelSticker={composedSvg(undefined, true)}
           width={svg.width}
           height={svg.height}
-          motion={motion}
+          motion={activeMotion}
           prompt={buildPrompt(controls, svg.width, svg.height, rawSvg)}
           onExportPng={downloadPng}
         />
@@ -776,9 +790,24 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
         className="flex items-center justify-between"
       >
         <h3 className="text-xs font-semibold uppercase tracking-[0.48px] text-[var(--app-muted)]">{title}</h3>
-        <ChevronDownIcon size={14} className={`text-[#a8a8a8] transition-transform ${open ? '' : '-rotate-90'}`} />
+        <motion.span animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
+          <ChevronDownIcon size={14} className="text-[#a8a8a8]" />
+        </motion.span>
       </button>
-      {open && <div className="flex flex-col gap-3">{children}</div>}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-col gap-3 pb-0.5">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }
