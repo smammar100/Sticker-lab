@@ -120,7 +120,7 @@ ${styleTag}      <div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.25 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0a66] p-6"
       onClick={onClose}
     >
@@ -128,7 +128,7 @@ ${styleTag}      <div
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 8 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 243, damping: 24 }}
         onClick={(e) => e.stopPropagation()}
       >
       <Elevated
@@ -169,7 +169,7 @@ ${styleTag}      <div
                       key={f.id}
                       whileTap={{ scale: 0.96 }}
                       whileHover={{ y: -2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      transition={{ type: 'spring', stiffness: 320, damping: 24 }}
                       onClick={() => setFormat(f.id)}
                       className={`flex flex-1 flex-col gap-2 rounded-xl bg-[var(--app-chrome)] p-3 text-left ${selected ? 'border-2 border-[var(--app-fg)]' : 'border border-[var(--app-border)]'}`}
                     >

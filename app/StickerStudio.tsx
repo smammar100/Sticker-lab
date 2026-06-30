@@ -790,7 +790,7 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
         className="flex items-center justify-between"
       >
         <h3 className="text-xs font-semibold uppercase tracking-[0.48px] text-[var(--app-muted)]">{title}</h3>
-        <motion.span animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
+        <motion.span animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.31, ease: [0.22, 1, 0.36, 1] }}>
           <ChevronDownIcon size={14} className="text-[#a8a8a8]" />
         </motion.span>
       </button>
@@ -801,7 +801,7 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-3 pb-0.5">{children}</div>
