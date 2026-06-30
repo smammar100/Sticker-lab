@@ -345,7 +345,7 @@ export default function App() {
       <div className="relative flex flex-1">
         {/* Left: source — floating full-height column (card + zoom/reset) */}
         <aside className="absolute bottom-4 left-4 top-4 z-20 flex w-[340px] flex-col justify-between gap-4">
-          <Elevated offset={2} className="flex max-h-[calc(100%-3rem)] w-full flex-col gap-3.5 overflow-y-auto rounded-2xl border border-[var(--app-border)] p-4">
+          <Elevated offset={2} className="flex max-h-[calc(100%-3rem)] w-full flex-col gap-3.5 overflow-y-auto rounded-2xl border border-[var(--app-border)] p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex flex-col gap-2.5">
             <h2 className="text-[13px] font-semibold tracking-[-0.28px]">Source</h2>
             <div className="flex h-9 items-center gap-1 rounded-lg bg-[var(--app-soft)] p-[3px]">
@@ -669,7 +669,7 @@ export default function App() {
           width={svg.width}
           height={svg.height}
           motion={motion}
-          prompt={buildPrompt(controls, svg.width, svg.height)}
+          prompt={buildPrompt(controls, svg.width, svg.height, rawSvg)}
           onExportPng={downloadPng}
         />
       )}
@@ -690,7 +690,7 @@ export default function App() {
 }
 
 /** Generate an LLM prompt that describes the current sticker styling. */
-function buildPrompt(c: StickerControls, w: number, h: number): string {
+function buildPrompt(c: StickerControls, w: number, h: number, artwork: string): string {
   const outline = c.outlineFill === 'shader'
     ? `a puffy die-cut outline filled with an animated "${c.outlineShader}" shader (a colorful gradient/glow)`
     : c.outlineFill === 'gradient'
@@ -698,7 +698,13 @@ function buildPrompt(c: StickerControls, w: number, h: number): string {
       : `a puffy die-cut outline in ${c.outlineColor}`
   const shadow = c.shadowOpacity > 0 ? ` and a soft drop shadow beneath it` : ''
   const motionLine = getMotion(c.motion).prompt
-  return `A glossy die-cut sticker of the supplied artwork. Give it ${outline}, a bright specular highlight that catches a moving light source, and a subtle organic wobble along the edges (Perlin/turbulence noise)${shadow}. Render it at ${w}×${h}, 1:1, on a fully transparent background — no card or frame.${motionLine ? ` ${motionLine}` : ''}`
+  const art = artwork.trim()
+  return `Turn the SVG artwork below into a glossy die-cut sticker. Give it ${outline}, a bright specular highlight that catches a moving light source (use an SVG feSpecularLighting + fePointLight filter), and a subtle organic wobble along the edges (feTurbulence / Perlin noise)${shadow}. Render it at ${w}×${h}, 1:1, on a fully transparent background — no card or frame.${motionLine ? ` ${motionLine}` : ''}
+
+Artwork to use:
+\`\`\`svg
+${art}
+\`\`\``
 }
 
 /**

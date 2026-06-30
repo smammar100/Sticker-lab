@@ -179,8 +179,8 @@ ${styleTag}      <div
                   <span className="text-xs font-medium">{copied ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
-              <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
-                <p className="text-xs leading-relaxed text-[var(--app-sub)]">{prompt}</p>
+              <div className="h-[180px] overflow-y-auto rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
+                <p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-[var(--app-sub)]">{prompt}</p>
               </div>
               <p className="text-[11px] text-[var(--app-muted)]">Paste into ChatGPT, Claude or any LLM to recreate this sticker.</p>
             </div>
